@@ -342,7 +342,8 @@ cyclical-analysis-meli/
 │   └── tables/                  # CSV summary tables
 │
 ├── docs/                        # Documentation
-│   └── data_quality.md
+│   ├── data_quality.md          # Data quality & preparation guide
+│   └── definitions.md           # Comprehensive metrics glossary
 │
 └── .venv/                       # Virtual environment (not in git)
 ```
