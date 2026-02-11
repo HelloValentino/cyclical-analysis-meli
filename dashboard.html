@@ -1,0 +1,227 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>VP Capital Cycle Analysis - MercadoLibre Dashboard</title>
+<style>
+  :root {
+    --bg: #f8f9fa; --surface: #ffffff; --border: #dee2e6;
+    --text: #212529; --muted: #6c757d; --accent: #1a5276;
+    --accent-light: #eaf2f8; --link: #2471a3; --code-bg: #f1f3f5;
+    --green: #27ae60; --amber: #f39c12; --red: #c0392b;
+  }
+  *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+  body { font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
+         background: var(--bg); color: var(--text); line-height: 1.6; }
+  a { color: var(--link); text-decoration: none; }
+  a:hover { text-decoration: underline; }
+  .container { max-width: 1100px; margin: 0 auto; padding: 0 24px 48px; }
+
+  header { background: var(--accent); color: #fff; padding: 40px 0 32px; margin-bottom: 32px; }
+  header .container { display: flex; flex-direction: column; gap: 8px; }
+  header h1 { font-size: 1.75rem; font-weight: 700; letter-spacing: -0.02em; }
+  header p  { font-size: 0.95rem; opacity: 0.88; max-width: 720px; }
+  .meta { font-size: 0.8rem; opacity: 0.65; margin-top: 6px; }
+
+  section { margin-bottom: 36px; }
+  section > h2 { font-size: 1.2rem; font-weight: 600; color: var(--accent);
+                  border-bottom: 2px solid var(--border); padding-bottom: 6px; margin-bottom: 16px; }
+
+  .grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(300px, 1fr)); gap: 16px; }
+  .card { background: var(--surface); border: 1px solid var(--border); border-radius: 8px;
+          padding: 18px 20px; transition: box-shadow .15s; }
+  .card:hover { box-shadow: 0 2px 8px rgba(0,0,0,.08); }
+  .card h3 { font-size: 0.95rem; font-weight: 600; margin-bottom: 4px; }
+  .card p  { font-size: 0.84rem; color: var(--muted); margin-bottom: 10px; }
+  .card a.btn { display: inline-block; font-size: 0.82rem; font-weight: 500;
+                padding: 4px 12px; border-radius: 4px; background: var(--accent-light); color: var(--accent); }
+  .card a.btn:hover { background: var(--accent); color: #fff; text-decoration: none; }
+
+  .badge { display: inline-block; font-size: 0.7rem; font-weight: 600; padding: 2px 7px;
+           border-radius: 3px; vertical-align: middle; margin-left: 6px; }
+  .badge-png  { background: #d5f5e3; color: #1e8449; }
+  .badge-csv  { background: #fdebd0; color: #b9770e; }
+  .badge-parq { background: #fadbd8; color: #922b21; }
+  .badge-md   { background: #d6eaf8; color: #1a5276; }
+
+  .quickstart { background: var(--surface); border: 1px solid var(--border); border-radius: 8px; padding: 20px 24px; }
+  .quickstart h3 { font-size: 0.95rem; margin-bottom: 10px; }
+  .quickstart pre { background: var(--code-bg); padding: 14px 16px; border-radius: 6px;
+                    font-size: 0.84rem; overflow-x: auto; line-height: 1.7; }
+  .quickstart code { font-family: "SF Mono", "Fira Code", Consolas, monospace; }
+
+  .note { font-size: 0.82rem; color: var(--muted); font-style: italic; margin-top: 6px; }
+
+  @media (max-width: 640px) {
+    .grid { grid-template-columns: 1fr; }
+    header h1 { font-size: 1.35rem; }
+  }
+</style>
+</head>
+<body>
+
+<header>
+  <div class="container">
+    <h1>VP Capital Cycle Analysis — MercadoLibre</h1>
+    <p>Institutional-grade framework that extracts SEC EDGAR XBRL data, calculates VP/HOLT
+       capital cycle metrics (ROIC, Economic Profit, Invested Capital), applies continuous
+       macro regime classification, and generates research-quality visualizations.</p>
+    <span class="meta">Last updated: <time id="ts"></time></span>
+  </div>
+</header>
+
+<div class="container">
+
+<!-- ───────── Documentation ───────── -->
+<section>
+  <h2>📄 Documentation</h2>
+  <div class="grid">
+    <article class="card">
+      <h3>Framework Overview &amp; Usage Guide <span class="badge badge-md">MD</span></h3>
+      <p>Theoretical foundation, methodology, VP metric definitions, institutional
+         enhancements, and troubleshooting guide.</p>
+      <a class="btn" href="md-viewer.html?file=src/README.md">Open README</a>
+    </article>
+    <article class="card">
+      <h3>Data Quality &amp; Preparation Pipeline <span class="badge badge-md">MD</span></h3>
+      <p>End-to-end data lineage: XBRL tag mapping, quarterly alignment, YTD conversion,
+         regime classification, phase-space tagging, and quality scoring.</p>
+      <a class="btn" href="md-viewer.html?file=docs/data_quality.md">Open Data Quality Docs</a>
+    </article>
+  </div>
+</section>
+
+<!-- ───────── Figures ───────── -->
+<section>
+  <h2>📊 Visualizations</h2>
+  <div class="grid">
+    <article class="card">
+      <h3>Phase Space Trajectory <span class="badge badge-png">PNG</span></h3>
+      <p>Flagship chart — ROIC vs. investment intensity with capital-cycle quadrants
+         and scarcity colour coding.</p>
+      <a class="btn" href="outputs/figures/phase_space_trajectory.png">View</a>
+    </article>
+    <article class="card">
+      <h3>Regime Continuous Heatmap <span class="badge badge-png">PNG</span></h3>
+      <p>Quarterly heatmap of the continuous capital scarcity index (0–100) and
+         regime probability over time.</p>
+      <a class="btn" href="outputs/figures/regime_continuous.png">View</a>
+    </article>
+    <article class="card">
+      <h3>Regime Probability <span class="badge badge-png">PNG</span></h3>
+      <p>Time-series of P(scarcity) with 50% and 75% threshold lines per country.</p>
+      <a class="btn" href="outputs/figures/regime_probability.png">View</a>
+    </article>
+    <article class="card">
+      <h3>Cycle Decomposition <span class="badge badge-png">PNG</span></h3>
+      <p>HP-filter decomposition of ROIC, capex intensity, opex intensity, and
+         economic profit into structural trend + cyclical component.</p>
+      <a class="btn" href="outputs/figures/cycle_decomposition.png">View</a>
+    </article>
+    <article class="card">
+      <h3>Credit S-Curve <span class="badge badge-png">PNG</span></h3>
+      <p>Log-scale credit portfolio with growth rate and acceleration for
+         inflection-point detection.</p>
+      <a class="btn" href="outputs/figures/credit_scurve.png">View</a>
+    </article>
+    <article class="card">
+      <h3>ROIC Evolution <span class="badge badge-png">PNG</span></h3>
+      <p>Reported vs. adjusted ROIC over time with HP trend overlay and WACC
+         reference line.</p>
+      <a class="btn" href="outputs/figures/roic_evolution.png">View</a>
+    </article>
+    <article class="card">
+      <h3>Intensity Evolution <span class="badge badge-png">PNG</span></h3>
+      <p>Growth capex, maintenance capex, and growth opex intensity as a share
+         of revenue over time.</p>
+      <a class="btn" href="outputs/figures/intensity_evolution.png">View</a>
+    </article>
+    <article class="card">
+      <h3>Economic Profit Persistence <span class="badge badge-png">PNG</span></h3>
+      <p>Bar chart of TTM economic profit with EP margin overlay — tests whether
+         value creation is sustained.</p>
+      <a class="btn" href="outputs/figures/ep_persistence.png">View</a>
+    </article>
+    <article class="card">
+      <h3>Capital Cycle Traditional <span class="badge badge-png">PNG</span></h3>
+      <p>Classic ROIC vs. capex intensity scatter coloured by time progression
+         with WACC and median-capex reference lines.</p>
+      <a class="btn" href="outputs/figures/capital_cycle_traditional.png">View</a>
+    </article>
+    <article class="card">
+      <h3>Credit Growth <span class="badge badge-png">PNG</span></h3>
+      <p>Year-over-year credit portfolio growth rate and quarter-over-quarter
+         momentum.</p>
+      <a class="btn" href="outputs/figures/credit_growth.png">View</a>
+    </article>
+    <article class="card">
+      <h3>Credit Intensity <span class="badge badge-png">PNG</span></h3>
+      <p>Credit portfolio as a percentage of trailing revenue — measures fintech
+         deployment intensity.</p>
+      <a class="btn" href="outputs/figures/credit_intensity.png">View</a>
+    </article>
+  </div>
+</section>
+
+<!-- ───────── Tables & Data ───────── -->
+<section>
+  <h2>📋 Tables &amp; Data</h2>
+  <div class="grid">
+    <article class="card">
+      <h3>Summary Metrics <span class="badge badge-csv">CSV</span></h3>
+      <p>Key VP metrics for the latest quarter: adjusted ROIC, WACC, economic profit,
+         reinvestment rate, regime classification, and phase quadrant.</p>
+      <a class="btn" href="outputs/tables/summary_metrics.csv">Download CSV</a>
+    </article>
+    <article class="card">
+      <h3>Master Dataset <span class="badge badge-parq">PARQUET</span></h3>
+      <p>Full 40-quarter × ~146-column dataset with all company financials, VP metrics,
+         macro data, regime tags, and cycle decompositions.</p>
+      <a class="btn" href="data/processed/master_dataset.parquet">Download Parquet</a>
+      <p class="note">Requires a Parquet viewer (pandas, DuckDB, or Tad).</p>
+    </article>
+    <article class="card">
+      <h3>Raw Financials <span class="badge badge-csv">CSV</span></h3>
+      <p>Quarterly financial panel extracted from SEC EDGAR — 25 metrics with quality
+         scoring applied.</p>
+      <a class="btn" href="data/raw/company/meli_financials.csv">Download CSV</a>
+    </article>
+  </div>
+</section>
+
+<!-- ───────── Quick Start ───────── -->
+<section>
+  <h2>🚀 Quick Start</h2>
+  <div class="quickstart">
+    <h3>Serve this dashboard locally (recommended)</h3>
+    <pre><code><span style="color:var(--muted)"># From the project root — opens all links including rendered Markdown</span>
+python -m http.server 8000
+<span style="color:var(--muted)"># Then open: http://localhost:8000/dashboard.html</span></code></pre>
+    <p class="note">Documentation links render Markdown as styled HTML via the built-in viewer.
+       This requires a local server — <code>file://</code> blocks cross-file requests in most browsers.</p>
+  </div>
+  <div class="quickstart" style="margin-top:12px">
+    <h3>Run the full pipeline</h3>
+    <pre><code><span style="color:var(--muted)"># 1. Activate the virtual environment</span>
+source .venv/bin/activate
+
+<span style="color:var(--muted)"># 2. Extract SEC data (fetches from EDGAR or uses cache)</span>
+python src/sec_data_extractor.py
+
+<span style="color:var(--muted)"># 3. Run the full analysis pipeline</span>
+python src/main.py</code></pre>
+    <p class="note">Steps 2 and 3 are independent — re-run step 3 alone to regenerate
+       outputs from cached data. Clear <code>data/raw/</code> to force a fresh fetch.</p>
+  </div>
+</section>
+
+</div><!-- .container -->
+
+<script>
+  document.getElementById('ts').textContent = new Date().toLocaleDateString('en-US', {
+    year: 'numeric', month: 'long', day: 'numeric', hour: '2-digit', minute: '2-digit'
+  });
+</script>
+</body>
+</html>

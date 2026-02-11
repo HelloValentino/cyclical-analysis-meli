@@ -1,0 +1,29 @@
+paths:
+  data_raw: "data/raw"
+  data_processed: "data/processed"
+  outputs_figures: "outputs/figures"
+  outputs_tables: "outputs/tables"
+
+companies:
+  primary:
+    ticker: "MELI"
+    name: "MercadoLibre Inc."
+
+time_periods:
+  start_date: "2015-01-01"
+  end_date: "2025-12-31"
+
+parameters:
+  base_wacc: 0.12
+  country_risk_premium:
+    ARG: 0.08
+    BRA: 0.04
+    MEX: 0.02
+    LATAM: 0.05
+  rd_amortization_years: 4.0
+  regime_thresholds:
+    inflation_high: 40.0
+    inflation_moderate: 15.0
+    fx_vol_high: 0.15
+    real_rate_negative: 0
+    credit_gap_negative: -5.0

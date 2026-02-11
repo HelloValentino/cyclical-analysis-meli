@@ -1,0 +1,22 @@
+
+meli_capital_cycle/
+│
+├── data/
+│   ├── raw/
+│   │   ├── macro/
+│   │   └── company/
+│   └── processed/
+│
+├── outputs/
+│   ├── figures/
+│   └── tables/
+│
+├── config.yaml
+├── requirements.txt
+├── README.md
+│
+├── data_acquisition.py      # Fetch macro and load company data
+├── calculations.py           # ALL metric calculations (returns + intensity)
+├── analysis.py               # Regime classification and merging
+├── visualization.py          # ALL charts and tables
+└── main.py                   # Orchestration

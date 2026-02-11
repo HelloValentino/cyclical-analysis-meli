@@ -1,0 +1,215 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Loading…</title>
+<style>
+  :root {
+    --bg: #f8f9fa; --surface: #ffffff; --border: #dee2e6;
+    --text: #212529; --muted: #6c757d; --accent: #1a5276;
+    --accent-light: #eaf2f8; --link: #2471a3; --code-bg: #f1f3f5;
+  }
+  *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+  body { font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
+         background: var(--bg); color: var(--text); line-height: 1.7; }
+  a { color: var(--link); }
+
+  .topbar { background: var(--accent); color: #fff; padding: 12px 0; position: sticky; top: 0; z-index: 10; }
+  .topbar .inner { max-width: 860px; margin: 0 auto; padding: 0 24px;
+                   display: flex; align-items: center; gap: 16px; }
+  .topbar a { color: #fff; text-decoration: none; font-size: 0.85rem; opacity: 0.85; }
+  .topbar a:hover { opacity: 1; text-decoration: underline; }
+  .topbar .file { font-size: 0.82rem; opacity: 0.6; margin-left: auto; font-family: monospace; }
+
+  .content { max-width: 860px; margin: 32px auto; padding: 0 24px 64px; }
+
+  /* ── Markdown rendered styles ── */
+  .md h1 { font-size: 1.8rem; font-weight: 700; margin: 32px 0 12px; color: var(--accent);
+           border-bottom: 2px solid var(--border); padding-bottom: 8px; }
+  .md h2 { font-size: 1.35rem; font-weight: 600; margin: 28px 0 10px; color: var(--accent); }
+  .md h3 { font-size: 1.1rem; font-weight: 600; margin: 22px 0 8px; }
+  .md h4 { font-size: 0.95rem; font-weight: 600; margin: 18px 0 6px; }
+  .md p  { margin: 0 0 14px; }
+  .md ul, .md ol { margin: 0 0 14px; padding-left: 28px; }
+  .md li { margin-bottom: 4px; }
+  .md blockquote { border-left: 4px solid var(--accent); background: var(--accent-light);
+                   padding: 10px 16px; margin: 0 0 14px; color: var(--muted); font-style: italic; }
+  .md pre { background: var(--code-bg); padding: 14px 18px; border-radius: 6px;
+            overflow-x: auto; margin: 0 0 14px; font-size: 0.84rem; line-height: 1.6; }
+  .md code { font-family: "SF Mono", "Fira Code", Consolas, monospace; font-size: 0.88em; }
+  .md p code, .md li code, .md td code {
+    background: var(--code-bg); padding: 2px 6px; border-radius: 3px; }
+  .md pre code { background: none; padding: 0; }
+  .md table { border-collapse: collapse; width: 100%; margin: 0 0 14px; font-size: 0.9rem; }
+  .md th, .md td { border: 1px solid var(--border); padding: 8px 12px; text-align: left; }
+  .md th { background: var(--accent-light); font-weight: 600; }
+  .md tr:nth-child(even) { background: #fafbfc; }
+  .md hr { border: none; border-top: 2px solid var(--border); margin: 28px 0; }
+  .md strong { font-weight: 600; }
+  .md img { max-width: 100%; border-radius: 6px; }
+
+  .error { background: #fdecea; border: 1px solid #e74c3c; border-radius: 8px;
+           padding: 20px; color: #922b21; margin-top: 40px; }
+</style>
+</head>
+<body>
+
+<nav class="topbar">
+  <div class="inner">
+    <a href="dashboard.html">← Dashboard</a>
+    <span class="file" id="filepath"></span>
+  </div>
+</nav>
+
+<main class="content md" id="out">
+  <p style="color:var(--muted)">Loading…</p>
+</main>
+
+<script>
+// ─── Minimal Markdown → HTML parser (no dependencies) ───
+// Handles: headings, bold, italic, inline code, code blocks, blockquotes,
+// tables, ordered/unordered lists, horizontal rules, links, images, paragraphs.
+function mdToHtml(src) {
+  var lines = src.replace(/\r\n/g, '\n').replace(/\r/g, '\n').split('\n');
+  var html = [], i = 0, n = lines.length;
+
+  function esc(s) { return s.replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;'); }
+
+  function inline(s) {
+    s = esc(s);
+    // images before links
+    s = s.replace(/!\[([^\]]*)\]\(([^)]+)\)/g, '<img src="$2" alt="$1">');
+    s = s.replace(/\[([^\]]+)\]\(([^)]+)\)/g, '<a href="$2">$1</a>');
+    s = s.replace(/`([^`]+)`/g, '<code>$1</code>');
+    s = s.replace(/\*\*([^*]+)\*\*/g, '<strong>$1</strong>');
+    s = s.replace(/__([^_]+)__/g, '<strong>$1</strong>');
+    s = s.replace(/\*([^*]+)\*/g, '<em>$1</em>');
+    s = s.replace(/_([^_]+)_/g, '<em>$1</em>');
+    return s;
+  }
+
+  while (i < n) {
+    var L = lines[i];
+
+    // blank line
+    if (/^\s*$/.test(L)) { i++; continue; }
+
+    // fenced code block
+    if (/^```/.test(L)) {
+      var lang = L.replace(/^```\s*/, '');
+      var block = []; i++;
+      while (i < n && !/^```/.test(lines[i])) { block.push(esc(lines[i])); i++; }
+      i++; // skip closing ```
+      html.push('<pre><code>' + block.join('\n') + '</code></pre>');
+      continue;
+    }
+
+    // heading
+    var hm = L.match(/^(#{1,6})\s+(.*)/);
+    if (hm) { var lv = hm[1].length; html.push('<h'+lv+'>'+inline(hm[2])+'</h'+lv+'>'); i++; continue; }
+
+    // hr
+    if (/^(\*{3,}|-{3,}|_{3,})\s*$/.test(L)) { html.push('<hr>'); i++; continue; }
+
+    // blockquote
+    if (/^>\s?/.test(L)) {
+      var bq = [];
+      while (i < n && /^>\s?/.test(lines[i])) { bq.push(lines[i].replace(/^>\s?/, '')); i++; }
+      html.push('<blockquote>' + bq.map(inline).join(' ') + '</blockquote>');
+      continue;
+    }
+
+    // table (line starts with |)
+    if (/^\|/.test(L)) {
+      var rows = [];
+      while (i < n && /^\|/.test(lines[i])) { rows.push(lines[i]); i++; }
+      if (rows.length >= 2) {
+        var t = '<table>';
+        // header
+        var hcells = rows[0].split('|').filter(function(c){return c.trim()!=='';});
+        t += '<tr>' + hcells.map(function(c){return '<th>'+inline(c.trim())+'</th>';}).join('') + '</tr>';
+        // skip separator row (row[1])
+        for (var ri = 2; ri < rows.length; ri++) {
+          var cells = rows[ri].split('|').filter(function(c){return c.trim()!=='';});
+          t += '<tr>' + cells.map(function(c){return '<td>'+inline(c.trim())+'</td>';}).join('') + '</tr>';
+        }
+        t += '</table>';
+        html.push(t);
+      }
+      continue;
+    }
+
+    // unordered list
+    if (/^[\s]*[-*+]\s/.test(L)) {
+      html.push('<ul>');
+      while (i < n && /^[\s]*[-*+]\s/.test(lines[i])) {
+        html.push('<li>' + inline(lines[i].replace(/^[\s]*[-*+]\s+/, '')) + '</li>');
+        i++;
+      }
+      html.push('</ul>');
+      continue;
+    }
+
+    // ordered list
+    if (/^[\s]*\d+[.)]\s/.test(L)) {
+      html.push('<ol>');
+      while (i < n && /^[\s]*\d+[.)]\s/.test(lines[i])) {
+        html.push('<li>' + inline(lines[i].replace(/^[\s]*\d+[.)]\s+/, '')) + '</li>');
+        i++;
+      }
+      html.push('</ol>');
+      continue;
+    }
+
+    // paragraph (collect contiguous non-blank, non-special lines)
+    var para = [];
+    while (i < n && !/^\s*$/.test(lines[i]) && !/^```/.test(lines[i]) &&
+           !/^#{1,6}\s/.test(lines[i]) && !/^(\*{3,}|-{3,}|_{3,})\s*$/.test(lines[i]) &&
+           !/^>\s?/.test(lines[i]) && !/^\|/.test(lines[i]) &&
+           !/^[\s]*[-*+]\s/.test(lines[i]) && !/^[\s]*\d+[.)]\s/.test(lines[i])) {
+      para.push(lines[i]); i++;
+    }
+    if (para.length) html.push('<p>' + para.map(inline).join('\n') + '</p>');
+  }
+  return html.join('\n');
+}
+
+// ─── Load the file specified by ?file= query param ───
+(function() {
+  var params = new URLSearchParams(window.location.search);
+  var file = params.get('file');
+  var out = document.getElementById('out');
+  var fp  = document.getElementById('filepath');
+
+  if (!file) {
+    out.innerHTML = '<div class="error"><strong>No file specified.</strong><br>Use <code>?file=path/to/file.md</code></div>';
+    return;
+  }
+
+  fp.textContent = file;
+  document.title = file.split('/').pop() + ' — VP Capital Cycle';
+
+  // Use XMLHttpRequest (works on file:// in most browsers unlike fetch)
+  var xhr = new XMLHttpRequest();
+  xhr.open('GET', file, true);
+  xhr.onload = function() {
+    if (xhr.status === 200 || xhr.status === 0) { // status 0 is normal for file://
+      out.innerHTML = mdToHtml(xhr.responseText);
+    } else {
+      out.innerHTML = '<div class="error"><strong>Failed to load:</strong> ' + file +
+                      '<br>HTTP ' + xhr.status + '</div>';
+    }
+  };
+  xhr.onerror = function() {
+    out.innerHTML = '<div class="error"><strong>Failed to load:</strong> <code>' + file + '</code>' +
+      '<br><br>If you opened this page via <code>file://</code>, some browsers block local file access.' +
+      '<br>Try running a local server from the project root:' +
+      '<pre><code>python -m http.server 8000</code></pre>' +
+      'Then open <a href="http://localhost:8000/dashboard.html">http://localhost:8000/dashboard.html</a></div>';
+  };
+  xhr.send();
+})();
+</script>
+</body>
+</html>
