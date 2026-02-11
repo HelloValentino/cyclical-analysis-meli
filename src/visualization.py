@@ -276,6 +276,27 @@ def create_capital_cycle_diagram(df: pd.DataFrame, output_path: Path) -> None:
     logger.info(f"  ✓ Saved: {output_path.name}")
 
 
+def _cycle_bar(ax, dates, cyc, ylabel: str, title: str) -> None:
+    """Plot cyclical deviation bars with proper width, colour, and robust y-limits."""
+    import datetime as _dt
+
+    bar_width = _dt.timedelta(days=60)  # visible at quarterly spacing (~91 d)
+    colors = ["green" if v >= 0 else "red" for v in cyc]
+    ax.bar(dates, cyc, width=bar_width, color=colors, alpha=0.7, edgecolor="black", linewidth=0.5)
+    ax.axhline(0, color="black", linewidth=2)
+
+    # Robust y-limits: use 5th/95th percentile so extreme outliers don't flatten everything
+    valid = cyc.dropna()
+    if len(valid) > 4:
+        p5, p95 = float(np.percentile(valid, 5)), float(np.percentile(valid, 95))
+        margin = max(abs(p95 - p5) * 0.15, 1.0)  # at least ±1 pp
+        ax.set_ylim(p5 - margin, p95 + margin)
+
+    ax.set_ylabel(ylabel)
+    ax.set_title(title)
+    ax.grid(True, alpha=0.3, axis="y")
+
+
 def create_cycle_decomposition_chart(df: pd.DataFrame, output_path: Path) -> None:
     logger.info("Creating cycle decomposition chart...")
     fig, axes = plt.subplots(2, 2, figsize=(16, 10))
@@ -288,12 +309,8 @@ def create_cycle_decomposition_chart(df: pd.DataFrame, output_path: Path) -> Non
         ax.set_ylabel("ROIC (%)")
         _safe_legend(ax)
 
-        ax = axes[0, 1]
-        cyc = df.get("roic_cycle", pd.Series(index=df.index, data=np.nan)).fillna(0) * 100
-        ax.bar(df["date"], cyc, alpha=0.7)
-        ax.axhline(0, linewidth=2)
-        ax.set_title("ROIC: Cyclical Deviation")
-        ax.set_ylabel("pp")
+        cyc = df["roic_cycle"].fillna(0) * 100 if "roic_cycle" in df.columns else pd.Series(0.0, index=df.index)
+        _cycle_bar(axes[0, 1], df["date"], cyc, "pp", "ROIC: Cyclical Deviation")
     else:
         axes[0, 0].text(0.5, 0.5, "ROIC trend unavailable", ha="center", va="center", transform=axes[0, 0].transAxes)
         axes[0, 1].text(0.5, 0.5, "ROIC cycle unavailable", ha="center", va="center", transform=axes[0, 1].transAxes)
@@ -306,12 +323,8 @@ def create_cycle_decomposition_chart(df: pd.DataFrame, output_path: Path) -> Non
         ax.set_ylabel("% of revenue")
         _safe_legend(ax)
 
-        ax = axes[1, 1]
-        cyc = df.get("total_capex_intensity_cycle", pd.Series(index=df.index, data=np.nan)).fillna(0) * 100
-        ax.bar(df["date"], cyc, alpha=0.7)
-        ax.axhline(0, linewidth=2)
-        ax.set_title("Investment: Cyclical Deviation")
-        ax.set_ylabel("pp")
+        cyc = df["total_capex_intensity_cycle"].fillna(0) * 100 if "total_capex_intensity_cycle" in df.columns else pd.Series(0.0, index=df.index)
+        _cycle_bar(axes[1, 1], df["date"], cyc, "pp", "Investment: Cyclical Deviation")
     else:
         axes[1, 0].text(0.5, 0.5, "Capex trend unavailable", ha="center", va="center", transform=axes[1, 0].transAxes)
         axes[1, 1].text(0.5, 0.5, "Capex cycle unavailable", ha="center", va="center", transform=axes[1, 1].transAxes)
@@ -320,6 +333,7 @@ def create_cycle_decomposition_chart(df: pd.DataFrame, output_path: Path) -> Non
         plt.sca(ax)
         plt.xticks(rotation=45, ha="right")
 
+    plt.suptitle("HP Filter Decomposition: Trend vs Cycle", fontsize=14, fontweight="bold", y=0.995)
     plt.tight_layout()
     plt.savefig(output_path, dpi=300, bbox_inches="tight")
     plt.close()
