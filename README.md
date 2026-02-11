@@ -49,8 +49,12 @@ This project performs comprehensive capital cycle analysis using:
 
 1. **Clone the repository**
 ```bash
-cd ~/Development
-git clone <repository-url> cyclical-analysis-meli
+# SSH (recommended if you have GitHub SSH keys)
+git clone git@github.com:HelloValentino/cyclical-analysis-meli.git
+cd cyclical-analysis-meli
+
+# Or HTTPS
+git clone https://github.com/HelloValentino/cyclical-analysis-meli.git
 cd cyclical-analysis-meli
 ```
 
@@ -157,12 +161,51 @@ python src/sec_data_extractor.py
 
 ## Usage
 
-### Basic Usage
+### View Outputs with Dashboard (Recommended)
 
-Run the complete analysis pipeline:
+The project includes an interactive HTML dashboard for browsing all outputs, visualizations, and documentation:
+
+```bash
+# From project root, start a local web server
+python -m http.server 8000
+
+# Then open in your browser:
+# http://localhost:8000/dashboard.html
+```
+
+**Dashboard Features:**
+- **Visualizations**: View all 11 charts (phase space, regime analysis, ROIC evolution, etc.)
+- **Data Tables**: Download summary metrics CSV and master dataset (Parquet)
+- **Documentation**: Rendered README and data quality docs via built-in Markdown viewer
+- **Quick Start**: Code snippets for running the pipeline
+
+**Note**: The dashboard requires a local server because browsers block cross-file requests for `file://` URLs. The simple Python HTTP server is the easiest solution.
+
+### Run the Pipeline
+
+**Option 1: Automated Script (Recommended)**
+
+The easiest way to run the pipeline is using the included script that clears cache and runs the analysis:
+
+```bash
+./run_pipeline.sh
+```
+
+This script will:
+- Clear all cache directories (macro data, processed data, outputs)
+- Verify virtual environment exists
+- Run the complete analysis pipeline
+- Show a summary of generated outputs
+
+**Option 2: Manual Execution**
+
+Run the pipeline directly without clearing cache:
 
 ```bash
 python src/main.py
+
+# Or using the virtual environment explicitly:
+.venv/bin/python src/main.py
 ```
 
 ### Expected Output
@@ -268,6 +311,9 @@ Adjusted ROIC: 23.5%  |  WACC: 16.0%  |  Spread: 750pp
 cyclical-analysis-meli/
 ├── README.md                    # This file
 ├── config.yaml                  # Configuration parameters
+├── run_pipeline.sh              # Pipeline runner script (clears cache + runs analysis)
+├── dashboard.html               # Interactive output browser (recommended)
+├── md-viewer.html               # Markdown documentation viewer
 ├── .gitignore                   # Git ignore rules
 │
 ├── src/                         # Source code
