@@ -29,7 +29,7 @@ if [ "$1" = "--clear-cache" ]; then
     cache_dirs=(
         "data/raw/macro"
         "data/processed"
-        "outputs/figures"
+        "outputs/data"
         "outputs/tables"
     )
 
@@ -99,7 +99,7 @@ echo "PIPELINE COMPLETE"
 echo "━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━"
 echo ""
 echo "Outputs generated:"
-echo "  • Visualizations: outputs/figures/ ($(ls -1 outputs/figures/*.png 2>/dev/null | wc -l | xargs) charts)"
+echo "  • Chart data:     outputs/data/ ($(ls -1 outputs/data/*.json 2>/dev/null | wc -l | xargs) JSON files)"
 echo "  • Summary table:  outputs/tables/summary_metrics.csv"
 echo "  • Master dataset: data/processed/master_dataset.parquet"
 echo ""

@@ -4,6 +4,7 @@
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
 <title>VP Capital Cycle Analysis - MercadoLibre Dashboard</title>
+<script src="https://cdn.plot.ly/plotly-2.35.2.min.js"></script>
 <style>
   :root {
     --bg: #f8f9fa; --surface: #ffffff; --border: #dee2e6;
@@ -16,9 +17,9 @@
          background: var(--bg); color: var(--text); line-height: 1.6; }
   a { color: var(--link); text-decoration: none; }
   a:hover { text-decoration: underline; }
-  .container { max-width: 1100px; margin: 0 auto; padding: 0 24px 48px; }
+  .container { max-width: 1400px; margin: 0 auto; padding: 0 24px 48px; }
 
-  header { background: var(--accent); color: #fff; padding: 40px 0 32px; margin-bottom: 32px; }
+  header { background: linear-gradient(135deg, #1a5276, #2471a3); color: #fff; padding: 40px 0 32px; margin-bottom: 32px; }
   header .container { display: flex; flex-direction: column; gap: 8px; }
   header h1 { font-size: 1.75rem; font-weight: 700; letter-spacing: -0.02em; }
   header p  { font-size: 0.95rem; opacity: 0.88; max-width: 720px; }
@@ -40,7 +41,6 @@
 
   .badge { display: inline-block; font-size: 0.7rem; font-weight: 600; padding: 2px 7px;
            border-radius: 3px; vertical-align: middle; margin-left: 6px; }
-  .badge-png  { background: #d5f5e3; color: #1e8449; }
   .badge-csv  { background: #fdebd0; color: #b9770e; }
   .badge-parq { background: #fadbd8; color: #922b21; }
   .badge-md   { background: #d6eaf8; color: #1a5276; }
@@ -53,6 +53,18 @@
 
   .note { font-size: 0.82rem; color: var(--muted); font-style: italic; margin-top: 6px; }
 
+  /* ── Chart styles ── */
+  .chart-card { background: var(--surface); border: 1px solid var(--border); border-radius: 10px;
+                padding: 20px; margin-bottom: 24px; box-shadow: 0 2px 8px rgba(0,0,0,.06); }
+  .chart-card h3 { font-size: 1.05rem; color: var(--accent); margin-bottom: 4px; }
+  .chart-card .desc { font-size: 0.85rem; color: var(--muted); margin-bottom: 12px; }
+  .chart-box { width: 100%; min-height: 420px; }
+  .chart-row { display: grid; grid-template-columns: 1fr 1fr; gap: 24px; }
+  .loading { text-align: center; padding: 60px; color: var(--muted); }
+
+  @media (max-width: 960px) {
+    .chart-row { grid-template-columns: 1fr; }
+  }
   @media (max-width: 640px) {
     .grid { grid-template-columns: 1fr; }
     header h1 { font-size: 1.35rem; }
@@ -68,11 +80,6 @@
        capital cycle metrics (ROIC, Economic Profit, Invested Capital), applies continuous
        macro regime classification, and generates research-quality visualizations.</p>
     <span class="meta">Last updated: <time id="ts"></time> — by Valentino Bianco <a href="https://github.com/HelloValentino" style="color:#fff;opacity:.85">@HelloValentino</a></span>
-    <div style="margin-top:14px">
-      <a href="dashboard_interactive.html" style="display:inline-block;background:#e67e22;color:#fff;padding:10px 24px;border-radius:6px;text-decoration:none;font-weight:600;font-size:.95rem">
-        🚀 Open Interactive Dashboard (Plotly.js)
-      </a>
-    </div>
   </div>
 </header>
 
@@ -80,7 +87,7 @@
 
 <!-- ───────── Documentation ───────── -->
 <section>
-  <h2>📄 Documentation</h2>
+  <h2>Documentation</h2>
   <div class="grid">
     <article class="card">
       <h3>Framework Overview &amp; Usage Guide <span class="badge badge-md">MD</span></h3>
@@ -94,84 +101,26 @@
          regime classification, phase-space tagging, and quality scoring.</p>
       <a class="btn" href="md-viewer.html?file=docs/data_quality.md">Open Data Quality Docs</a>
     </article>
+    <article class="card">
+      <h3>Metrics &amp; Definitions Reference <span class="badge badge-md">MD</span></h3>
+      <p>Comprehensive glossary of all financial metrics: ROIC, WACC, Economic Profit,
+         Capital Scarcity, Phase Space Quadrants, HP Filter, and analytical frameworks.</p>
+      <a class="btn" href="md-viewer.html?file=docs/definitions.md">Open Definitions</a>
+    </article>
   </div>
 </section>
 
-<!-- ───────── Figures ───────── -->
+<!-- ───────── Interactive Charts ───────── -->
 <section>
-  <h2>📊 Visualizations</h2>
-  <div class="grid">
-    <article class="card">
-      <h3>Phase Space Trajectory <span class="badge badge-png">PNG</span></h3>
-      <p>Flagship chart — ROIC vs. investment intensity with capital-cycle quadrants
-         and scarcity colour coding.</p>
-      <a class="btn" href="outputs/figures/phase_space_trajectory.png">View</a>
-    </article>
-    <article class="card">
-      <h3>Regime Continuous Heatmap <span class="badge badge-png">PNG</span></h3>
-      <p>Quarterly heatmap of the continuous capital scarcity index (0–100) and
-         regime probability over time.</p>
-      <a class="btn" href="outputs/figures/regime_continuous.png">View</a>
-    </article>
-    <article class="card">
-      <h3>Regime Probability <span class="badge badge-png">PNG</span></h3>
-      <p>Time-series of P(scarcity) with 50% and 75% threshold lines per country.</p>
-      <a class="btn" href="outputs/figures/regime_probability.png">View</a>
-    </article>
-    <article class="card">
-      <h3>Cycle Decomposition <span class="badge badge-png">PNG</span></h3>
-      <p>HP-filter decomposition of ROIC, capex intensity, opex intensity, and
-         economic profit into structural trend + cyclical component.</p>
-      <a class="btn" href="outputs/figures/cycle_decomposition.png">View</a>
-    </article>
-    <article class="card">
-      <h3>Credit S-Curve <span class="badge badge-png">PNG</span></h3>
-      <p>Log-scale credit portfolio with growth rate and acceleration for
-         inflection-point detection.</p>
-      <a class="btn" href="outputs/figures/credit_scurve.png">View</a>
-    </article>
-    <article class="card">
-      <h3>ROIC Evolution <span class="badge badge-png">PNG</span></h3>
-      <p>Reported vs. adjusted ROIC over time with HP trend overlay and WACC
-         reference line.</p>
-      <a class="btn" href="outputs/figures/roic_evolution.png">View</a>
-    </article>
-    <article class="card">
-      <h3>Intensity Evolution <span class="badge badge-png">PNG</span></h3>
-      <p>Growth capex, maintenance capex, and growth opex intensity as a share
-         of revenue over time.</p>
-      <a class="btn" href="outputs/figures/intensity_evolution.png">View</a>
-    </article>
-    <article class="card">
-      <h3>Economic Profit Persistence <span class="badge badge-png">PNG</span></h3>
-      <p>Bar chart of TTM economic profit with EP margin overlay — tests whether
-         value creation is sustained.</p>
-      <a class="btn" href="outputs/figures/ep_persistence.png">View</a>
-    </article>
-    <article class="card">
-      <h3>Capital Cycle Traditional <span class="badge badge-png">PNG</span></h3>
-      <p>Classic ROIC vs. capex intensity scatter coloured by time progression
-         with WACC and median-capex reference lines.</p>
-      <a class="btn" href="outputs/figures/capital_cycle_traditional.png">View</a>
-    </article>
-    <article class="card">
-      <h3>Credit Growth <span class="badge badge-png">PNG</span></h3>
-      <p>Year-over-year credit portfolio growth rate and quarter-over-quarter
-         momentum.</p>
-      <a class="btn" href="outputs/figures/credit_growth.png">View</a>
-    </article>
-    <article class="card">
-      <h3>Credit Intensity <span class="badge badge-png">PNG</span></h3>
-      <p>Credit portfolio as a percentage of trailing revenue — measures fintech
-         deployment intensity.</p>
-      <a class="btn" href="outputs/figures/credit_intensity.png">View</a>
-    </article>
+  <h2>Visualizations</h2>
+  <div id="charts">
+    <p class="loading" id="loader">Loading chart data…</p>
   </div>
 </section>
 
 <!-- ───────── Tables & Data ───────── -->
 <section>
-  <h2>📋 Tables &amp; Data</h2>
+  <h2>Tables &amp; Data</h2>
   <div class="grid">
     <article class="card">
       <h3>Summary Metrics <span class="badge badge-csv">CSV</span></h3>
@@ -197,36 +146,164 @@
 
 <!-- ───────── Quick Start ───────── -->
 <section>
-  <h2>🚀 Quick Start</h2>
+  <h2>Quick Start</h2>
   <div class="quickstart">
     <h3>Serve this dashboard locally (recommended)</h3>
-    <pre><code><span style="color:var(--muted)"># From the project root — opens all links including rendered Markdown</span>
+    <pre><code><span style="color:var(--muted)"># From the project root</span>
 python -m http.server 8000
 <span style="color:var(--muted)"># Then open: http://localhost:8000/dashboard.html</span></code></pre>
-    <p class="note">Documentation links render Markdown as styled HTML via the built-in viewer.
-       This requires a local server — <code>file://</code> blocks cross-file requests in most browsers.</p>
+    <p class="note">This requires a local server — <code>file://</code> blocks cross-file requests in most browsers.</p>
   </div>
   <div class="quickstart" style="margin-top:12px">
     <h3>Run the full pipeline</h3>
-    <pre><code><span style="color:var(--muted)"># 1. Activate the virtual environment</span>
-source .venv/bin/activate
+    <pre><code><span style="color:var(--muted)"># Run using cached data (works offline)</span>
+./run_pipeline.sh
 
-<span style="color:var(--muted)"># 2. Extract SEC data (fetches from EDGAR or uses cache)</span>
-python src/sec_data_extractor.py
-
-<span style="color:var(--muted)"># 3. Run the full analysis pipeline</span>
-python src/main.py</code></pre>
-    <p class="note">Steps 2 and 3 are independent — re-run step 3 alone to regenerate
-       outputs from cached data. Clear <code>data/raw/</code> to force a fresh fetch.</p>
+<span style="color:var(--muted)"># Force a fresh fetch (requires internet)</span>
+./run_pipeline.sh --clear-cache</code></pre>
   </div>
 </section>
 
 </div><!-- .container -->
 
 <script>
-  document.getElementById('ts').textContent = new Date().toLocaleDateString('en-US', {
-    year: 'numeric', month: 'long', day: 'numeric', hour: '2-digit', minute: '2-digit'
-  });
+document.getElementById('ts').textContent = new Date().toLocaleDateString('en-US', {
+  year: 'numeric', month: 'long', day: 'numeric', hour: '2-digit', minute: '2-digit'
+});
+
+// ── Interactive Charts (Plotly.js) ──
+const D='outputs/data/', P=Plotly, C=document.getElementById('charts');
+const GREEN='#27ae60',RED='#e74c3c',BLUE='#2471a3',ORANGE='#e67e22',GREY='#7f8c8d';
+const LY={paper_bgcolor:'#fff',plot_bgcolor:'#fafbfc',font:{family:'-apple-system,BlinkMacSystemFont,sans-serif',size:12},
+  margin:{l:60,r:30,t:40,b:50},hovermode:'x unified'};
+const CFG={responsive:true,displaylogo:false,modeBarButtonsToRemove:['lasso2d','select2d']};
+
+function cc(id,title,desc,wide){
+  const d=document.createElement('div');d.className='chart-card'+(wide?' wide':'');
+  d.innerHTML=`<h3>${title}</h3><div class="desc">${desc}</div><div id="${id}" class="chart-box"></div>`;
+  return d;
+}
+function barColors(vals){return vals.map(v=>v>=0?GREEN:RED)}
+
+async function load(f){const r=await fetch(D+f);return r.json();}
+
+async function init(){
+try{
+const [regime,regimeTS,phase,capCycle,decomp,intensity,roic,ep,scurve,cGrowth,cIntensity]=
+  await Promise.all(['regime_heatmap.json','regime_probability.json','phase_space.json',
+  'capital_cycle.json','cycle_decomposition.json','intensity_evolution.json','roic_evolution.json',
+  'ep_persistence.json','credit_scurve.json','credit_growth.json','credit_intensity.json'].map(load));
+
+document.getElementById('loader').remove();
+let el;
+
+// 1. Regime Heatmap
+el=cc('c-regime','Regime Heatmap (Continuous + Probability)','Capital scarcity index and regime probability over time');C.appendChild(el);
+const rTraces=[];
+if(regime.scarcity.values){rTraces.push({z:regime.scarcity.values,x:regime.scarcity.quarters,y:regime.scarcity.countries,
+  type:'heatmap',colorscale:'RdYlGn',reversescale:true,zmin:0,zmax:100,colorbar:{title:'Scarcity',len:.45,y:.78},xaxis:'x',yaxis:'y'});}
+if(regime.probability.values){rTraces.push({z:regime.probability.values,x:regime.probability.quarters,y:regime.probability.countries,
+  type:'heatmap',colorscale:'Reds',zmin:0,zmax:1,colorbar:{title:'P(Scarcity)',len:.45,y:.22},xaxis:'x2',yaxis:'y2'});}
+P.newPlot('c-regime',rTraces,{...LY,height:500,grid:{rows:2,columns:1,pattern:'independent'},
+  yaxis:{title:''},yaxis2:{title:''},xaxis:{side:'top'},xaxis2:{side:'top'}},CFG);
+
+// 2. Regime Probability TS
+el=cc('c-regime-ts','Regime Probability Over Time','P(Capital Scarcity) by country with threshold lines');C.appendChild(el);
+const rts=regimeTS.series.map((s,i)=>({x:s.dates,y:s.prob_scarcity,name:s.country,mode:'lines+markers',marker:{size:4}}));
+rts.push({x:regimeTS.series[0]?.dates||[],y:regimeTS.series[0]?.dates.map(()=>0.5)||[],name:'50% Threshold',mode:'lines',line:{dash:'dash',color:GREY}});
+P.newPlot('c-regime-ts',rts,{...LY,height:380,yaxis:{title:'P(Capital Scarcity)',range:[0,1]}},CFG);
+
+// 3 & 4: Phase Space + Capital Cycle side by side
+const row1=document.createElement('div');row1.className='chart-row';C.appendChild(row1);
+
+el=cc('c-phase','Phase Space Trajectory','ROIC vs Investment intensity with scarcity color coding');row1.appendChild(el);
+P.newPlot('c-phase',[{x:phase.phase_x,y:phase.phase_y,text:phase.labels,mode:'lines+markers',type:'scatter',
+  marker:{size:12,color:phase.scarcity.length?phase.scarcity:undefined,colorscale:'RdYlGn',reversescale:true,
+  cmin:0,cmax:100,colorbar:{title:'Scarcity'},line:{width:1,color:'#333'}},
+  hovertemplate:'%{text}<br>X: %{x:.2f}<br>Y: %{y:.2f}<extra></extra>'}],
+  {...LY,height:480,xaxis:{title:'Investment Intensity (Z-Score)',zeroline:true},yaxis:{title:'ROIC (Z-Score)',zeroline:true}},CFG);
+
+el=cc('c-capcycle','Capital Cycle Traditional','Capex intensity vs ROIC with time progression');row1.appendChild(el);
+P.newPlot('c-capcycle',[{x:capCycle.capex_intensity,y:capCycle.roic_ttm,text:capCycle.labels,mode:'lines+markers',type:'scatter',
+  marker:{size:10,color:capCycle.dates.map((_,i)=>i),colorscale:'Viridis',colorbar:{title:'Time →'},line:{width:1,color:'#333'}},
+  hovertemplate:'%{text}<br>Capex: %{x:.1f}%<br>ROIC: %{y:.1f}%<extra></extra>'}],
+  {...LY,height:480,xaxis:{title:'Capex Intensity (% Revenue)'},yaxis:{title:'ROIC TTM (%)'},
+  shapes:[{type:'line',y0:capCycle.wacc,y1:capCycle.wacc,x0:0,x1:1,xref:'paper',line:{dash:'dash',color:ORANGE,width:2}}]},CFG);
+
+// 5. Cycle Decomposition (2x2)
+el=cc('c-decomp','HP Filter Decomposition: Trend vs Cycle','ROIC and Investment structural trends with cyclical deviations',true);C.appendChild(el);
+P.newPlot('c-decomp',[
+  {x:decomp.dates,y:decomp.roic_ttm,name:'ROIC TTM',mode:'lines',opacity:.5,xaxis:'x',yaxis:'y'},
+  {x:decomp.dates,y:decomp.roic_trend,name:'Trend (HP)',mode:'lines',line:{width:3},xaxis:'x',yaxis:'y'},
+  {x:decomp.dates,y:decomp.roic_cycle,name:'ROIC Cycle',type:'bar',marker:{color:barColors(decomp.roic_cycle)},xaxis:'x2',yaxis:'y2'},
+  {x:decomp.dates,y:decomp.capex_intensity,name:'Capex',mode:'lines',opacity:.5,xaxis:'x3',yaxis:'y3'},
+  {x:decomp.dates,y:decomp.capex_trend,name:'Trend (HP)',mode:'lines',line:{width:3},xaxis:'x3',yaxis:'y3'},
+  {x:decomp.dates,y:decomp.capex_cycle,name:'Capex Cycle',type:'bar',marker:{color:barColors(decomp.capex_cycle)},xaxis:'x4',yaxis:'y4'}
+],{...LY,height:600,grid:{rows:2,columns:2,pattern:'independent'},showlegend:false,
+  yaxis:{title:'ROIC (%)'},yaxis2:{title:'Deviation (pp)'},yaxis3:{title:'Capex (% Rev)'},yaxis4:{title:'Deviation (pp)'},
+  xaxis:{},xaxis2:{},xaxis3:{},xaxis4:{}},CFG);
+
+// 6 & 7: Intensity + ROIC Evolution
+const row2=document.createElement('div');row2.className='chart-row';C.appendChild(row2);
+
+el=cc('c-intensity','Intensity Evolution','Growth Opex, Capex, and Total Growth Investment as % of Revenue');row2.appendChild(el);
+P.newPlot('c-intensity',[
+  {x:intensity.dates,y:intensity.growth_opex,name:'Growth Opex',mode:'lines+markers',xaxis:'x',yaxis:'y'},
+  {x:intensity.dates,y:intensity.rd,name:'R&D',mode:'lines',line:{dash:'dash'},opacity:.7,xaxis:'x',yaxis:'y'},
+  {x:intensity.dates,y:intensity.sm,name:'S&M',mode:'lines',line:{dash:'dash'},opacity:.7,xaxis:'x',yaxis:'y'},
+  {x:intensity.dates,y:intensity.capex,name:'Capex',mode:'lines+markers',xaxis:'x2',yaxis:'y2'},
+  {x:intensity.dates,y:intensity.total_growth,name:'Total Growth Inv.',mode:'lines+markers',xaxis:'x3',yaxis:'y3'}
+],{...LY,height:600,grid:{rows:3,columns:1,pattern:'independent',roworder:'top to bottom'},
+  yaxis:{title:'Growth Opex (% Rev)'},yaxis2:{title:'Capex (% Rev)'},yaxis3:{title:'Total Inv (% Rev)'}},CFG);
+
+el=cc('c-roic','ROIC Evolution','Reported vs Adjusted ROIC and Incremental ROIC');row2.appendChild(el);
+P.newPlot('c-roic',[
+  {x:roic.dates,y:roic.roic_ttm,name:'ROIC Reported',mode:'lines',line:{dash:'dash'},opacity:.7,xaxis:'x',yaxis:'y'},
+  {x:roic.dates,y:roic.adjusted_roic,name:'ROIC Adjusted',mode:'lines',line:{width:3},xaxis:'x',yaxis:'y'},
+  {x:roic.dates,y:roic.roic_trend,name:'Trend (HP)',mode:'lines',line:{dash:'dot'},opacity:.7,xaxis:'x',yaxis:'y'},
+  {x:roic.dates,y:roic.wacc,name:'WACC',mode:'lines',line:{dash:'dash',color:ORANGE,width:2},xaxis:'x',yaxis:'y'},
+  {x:roic.dates,y:roic.incremental_roic,name:'Inc ROIC',mode:'lines',line:{dash:'dash'},opacity:.7,xaxis:'x2',yaxis:'y2'},
+  {x:roic.dates,y:roic.adjusted_incremental_roic,name:'Inc ROIC Adj',mode:'lines',line:{width:3},xaxis:'x2',yaxis:'y2'},
+  {x:roic.dates,y:roic.wacc,name:'WACC',mode:'lines',line:{dash:'dash',color:ORANGE,width:2},showlegend:false,xaxis:'x2',yaxis:'y2'}
+],{...LY,height:600,grid:{rows:2,columns:1,pattern:'independent'},
+  yaxis:{title:'ROIC (%)'},yaxis2:{title:'Incremental ROIC (%)'}},CFG);
+
+// 8. EP Persistence
+el=cc('c-ep','Economic Profit Persistence','EP (TTM) bars with EP Margin overlay',true);C.appendChild(el);
+const epVals=ep.economic_profit_ttm.map(v=>v!=null?v/1e6:null);
+P.newPlot('c-ep',[
+  {x:ep.dates,y:epVals,name:'EP ($M)',type:'bar',marker:{color:barColors(ep.economic_profit_ttm)},yaxis:'y'},
+  {x:ep.dates,y:ep.ep_margin,name:'EP Margin (%)',mode:'lines+markers',line:{color:BLUE,width:2},yaxis:'y2'}
+],{...LY,height:400,yaxis:{title:'Economic Profit ($M)'},yaxis2:{title:'EP Margin (% Rev)',overlaying:'y',side:'right'}},CFG);
+
+// 9. Credit S-Curve
+el=cc('c-scurve','Credit S-Curve','Log level, velocity (log growth), and acceleration',true);C.appendChild(el);
+P.newPlot('c-scurve',[
+  {x:scurve.dates,y:scurve.credit_log,name:'ln(Credit)',mode:'lines+markers',xaxis:'x',yaxis:'y'},
+  {x:scurve.dates,y:scurve.credit_log_growth,name:'Log Growth',mode:'lines+markers',xaxis:'x2',yaxis:'y2'},
+  {x:scurve.dates,y:scurve.credit_log_accel,name:'Acceleration',type:'bar',marker:{color:barColors(scurve.credit_log_accel||[])},xaxis:'x3',yaxis:'y3'}
+],{...LY,height:650,grid:{rows:3,columns:1,pattern:'independent',roworder:'top to bottom'},
+  yaxis:{title:'ln(Credit Portfolio)'},yaxis2:{title:'QoQ Δ ln(Credit)'},yaxis3:{title:'Δ² ln(Credit)'}},CFG);
+
+// 10 & 11: Credit Growth + Intensity
+const row3=document.createElement('div');row3.className='chart-row';C.appendChild(row3);
+
+el=cc('c-cgrowth','Credit Growth Dynamics','YoY credit growth with acceleration overlay');row3.appendChild(el);
+P.newPlot('c-cgrowth',[
+  {x:cGrowth.dates,y:cGrowth.credit_growth,name:'YoY Growth',type:'bar',marker:{color:barColors(cGrowth.credit_growth||[])},yaxis:'y'},
+  {x:cGrowth.dates,y:cGrowth.credit_growth_accel,name:'Acceleration',mode:'lines+markers',line:{color:BLUE,width:2},yaxis:'y2'}
+],{...LY,height:400,yaxis:{title:'YoY Credit Growth (%)'},yaxis2:{title:'Acceleration (pp)',overlaying:'y',side:'right'}},CFG);
+
+el=cc('c-cintensity','Credit Deployment Intensity','Credit portfolio as % of revenue');row3.appendChild(el);
+P.newPlot('c-cintensity',[
+  {x:cIntensity.dates,y:cIntensity.credit_intensity,name:'Credit Intensity',mode:'lines+markers',line:{width:3}},
+  {x:cIntensity.dates,y:cIntensity.dates.map(()=>20),name:'20% Threshold',mode:'lines',line:{dash:'dash',color:ORANGE}}
+],{...LY,height:400,yaxis:{title:'Credit / Revenue (%)'}},CFG);
+
+}catch(e){document.getElementById('loader').innerHTML='<b>Error loading data:</b> '+e.message+
+'<br><br>Make sure to run <code>./run_pipeline.sh</code> first, then serve via <code>python -m http.server 8000</code>';}
+}
+init();
 </script>
 </body>
 </html>
