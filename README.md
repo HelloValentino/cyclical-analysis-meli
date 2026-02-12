@@ -185,17 +185,15 @@ python -m http.server 8000
 
 **Option 1: Automated Script (Recommended)**
 
-The easiest way to run the pipeline is using the included script that clears cache and runs the analysis:
-
 ```bash
+# Run using cached data (works offline)
 ./run_pipeline.sh
+
+# Force a fresh fetch (requires internet)
+./run_pipeline.sh --clear-cache
 ```
 
-This script will:
-- Clear all cache directories (macro data, processed data, outputs)
-- Verify virtual environment exists
-- Run the complete analysis pipeline
-- Show a summary of generated outputs
+By default the script **keeps cached data**, so it works without internet connectivity. Pass `--clear-cache` only when you need to re-fetch macro data from BCB.
 
 **Option 2: Manual Execution**
 
@@ -311,7 +309,7 @@ Adjusted ROIC: 23.5%  |  WACC: 16.0%  |  Spread: 750pp
 cyclical-analysis-meli/
 ├── README.md                    # This file
 ├── config.yaml                  # Configuration parameters
-├── run_pipeline.sh              # Pipeline runner script (clears cache + runs analysis)
+├── run_pipeline.sh              # Pipeline runner script (--clear-cache optional)
 ├── dashboard.html               # Interactive output browser (recommended)
 ├── md-viewer.html               # Markdown documentation viewer
 ├── .gitignore                   # Git ignore rules

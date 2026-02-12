@@ -1,6 +1,8 @@
 #!/usr/bin/env bash
 # VP Capital Cycle Analysis Pipeline Runner
-# Clears local cache and runs the complete analysis pipeline
+# Usage:
+#   ./run_pipeline.sh               Run pipeline using cached data
+#   ./run_pipeline.sh --clear-cache Clear all cached data before running
 
 set -e  # Exit on any error
 
@@ -17,31 +19,36 @@ echo "► Working directory: $SCRIPT_DIR"
 echo ""
 
 # ─────────────────────────────────────────────────────────────────────────────
-# Step 1: Clear cache
+# Step 1: Clear cache (only if --clear-cache flag is passed)
 # ─────────────────────────────────────────────────────────────────────────────
-echo "━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━"
-echo "STEP 1: CLEARING LOCAL CACHE"
-echo "━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━"
+if [ "$1" = "--clear-cache" ]; then
+    echo "━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━"
+    echo "STEP 1: CLEARING LOCAL CACHE"
+    echo "━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━"
 
-cache_dirs=(
-    "data/raw/macro"
-    "data/processed"
-    "outputs/figures"
-    "outputs/tables"
-)
+    cache_dirs=(
+        "data/raw/macro"
+        "data/processed"
+        "outputs/figures"
+        "outputs/tables"
+    )
 
-for dir in "${cache_dirs[@]}"; do
-    if [ -d "$dir" ]; then
-        echo "  ✓ Clearing: $dir"
-        rm -rf "$dir"/*
-    else
-        echo "  ⊘ Not found (skipping): $dir"
-    fi
-done
+    for dir in "${cache_dirs[@]}"; do
+        if [ -d "$dir" ]; then
+            echo "  ✓ Clearing: $dir"
+            rm -rf "$dir"/*
+        else
+            echo "  ⊘ Not found (skipping): $dir"
+        fi
+    done
 
-echo ""
-echo "✓ Cache cleared successfully"
-echo ""
+    echo ""
+    echo "✓ Cache cleared"
+    echo ""
+else
+    echo "► Using cached data (pass --clear-cache to force a fresh fetch)"
+    echo ""
+fi
 
 # ─────────────────────────────────────────────────────────────────────────────
 # Step 2: Verify virtual environment

@@ -7,6 +7,7 @@ import yaml
 import logging
 from pathlib import Path
 import numpy as np
+import pandas as pd
 
 sys.path.insert(0, str(Path(__file__).parent.parent))
 
@@ -44,17 +45,23 @@ def main() -> None:
     _ensure_dirs(config)
 
     # STEP 1: MACRO
-    logger.info("STEP 1: FETCHING MACRO DATA")
-    macro_fetcher = MacroDataFetcher(
-        start_date=config["time_periods"]["start_date"],
-        end_date=config["time_periods"]["end_date"],
-        output_dir=str(Path(config["paths"]["data_raw"]) / "macro"),
-    )
-    try:
-        macro_df = macro_fetcher.fetch_all()
-    except Exception as e:
-        logger.error("Macro fetch failed: %s", e, exc_info=True)
-        macro_df = None
+    macro_cache = Path(config["paths"]["data_raw"]) / "macro" / "macro_master.csv"
+    if macro_cache.exists():
+        logger.info("STEP 1: LOADING CACHED MACRO DATA (%s)", macro_cache)
+        macro_df = pd.read_csv(str(macro_cache), parse_dates=["date"])
+        logger.info("  ✓ Loaded %d rows from cache", len(macro_df))
+    else:
+        logger.info("STEP 1: FETCHING MACRO DATA (no cache found)")
+        macro_fetcher = MacroDataFetcher(
+            start_date=config["time_periods"]["start_date"],
+            end_date=config["time_periods"]["end_date"],
+            output_dir=str(Path(config["paths"]["data_raw"]) / "macro"),
+        )
+        try:
+            macro_df = macro_fetcher.fetch_all()
+        except Exception as e:
+            logger.error("Macro fetch failed: %s", e, exc_info=True)
+            macro_df = None
 
     if macro_df is None or macro_df.empty:
         logger.warning("No macro data available - continuing with company data only")
