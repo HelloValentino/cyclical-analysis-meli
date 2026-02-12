@@ -221,16 +221,20 @@ P.newPlot('c-regime-ts',rts,{...LY,height:380,yaxis:{title:'P(Capital Scarcity)'
 // 3 & 4: Phase Space + Capital Cycle side by side
 const row1=document.createElement('div');row1.className='chart-row';C.appendChild(row1);
 
-el=cc('c-phase','Phase Space Trajectory','ROIC vs Investment intensity with scarcity color coding');row1.appendChild(el);
-P.newPlot('c-phase',[{x:phase.phase_x,y:phase.phase_y,text:phase.labels,mode:'lines+markers',type:'scatter',
-  marker:{size:12,color:phase.scarcity.length?phase.scarcity:undefined,colorscale:'RdYlGn',reversescale:true,
-  cmin:0,cmax:100,colorbar:{title:'Scarcity'},line:{width:1,color:'#333'}},
+el=cc('c-phase','Phase Space Trajectory (Annual)','Annual average ROIC vs Investment intensity with scarcity color coding');row1.appendChild(el);
+P.newPlot('c-phase',[{x:phase.phase_x,y:phase.phase_y,text:phase.labels,mode:'lines+markers+text',type:'scatter',
+  textposition:'top center',textfont:{size:11,color:'#1a5276'},
+  marker:{size:16,color:phase.scarcity.length?phase.scarcity:undefined,colorscale:'RdYlGn',reversescale:true,
+  cmin:0,cmax:100,colorbar:{title:'Scarcity'},line:{width:2,color:'#333'}},
+  line:{width:2,color:'rgba(0,0,0,0.3)'},
   hovertemplate:'%{text}<br>X: %{x:.2f}<br>Y: %{y:.2f}<extra></extra>'}],
   {...LY,height:480,xaxis:{title:'Investment Intensity (Z-Score)',zeroline:true},yaxis:{title:'ROIC (Z-Score)',zeroline:true}},CFG);
 
-el=cc('c-capcycle','Capital Cycle Traditional','Capex intensity vs ROIC with time progression');row1.appendChild(el);
-P.newPlot('c-capcycle',[{x:capCycle.capex_intensity,y:capCycle.roic_ttm,text:capCycle.labels,mode:'lines+markers',type:'scatter',
-  marker:{size:10,color:capCycle.dates.map((_,i)=>i),colorscale:'Viridis',colorbar:{title:'Time →'},line:{width:1,color:'#333'}},
+el=cc('c-capcycle','Capital Cycle Traditional (Annual)','Annual average Capex intensity vs ROIC with year labels');row1.appendChild(el);
+P.newPlot('c-capcycle',[{x:capCycle.capex_intensity,y:capCycle.roic_ttm,text:capCycle.labels,mode:'lines+markers+text',type:'scatter',
+  textposition:'top center',textfont:{size:11,color:'#1a5276'},
+  marker:{size:16,color:capCycle.dates.map((_,i)=>i),colorscale:'Viridis',colorbar:{title:'Time →'},line:{width:2,color:'#333'}},
+  line:{width:2,color:'rgba(0,0,0,0.3)'},
   hovertemplate:'%{text}<br>Capex: %{x:.1f}%<br>ROIC: %{y:.1f}%<extra></extra>'}],
   {...LY,height:480,xaxis:{title:'Capex Intensity (% Revenue)'},yaxis:{title:'ROIC TTM (%)'},
   shapes:[{type:'line',y0:capCycle.wacc,y1:capCycle.wacc,x0:0,x1:1,xref:'paper',line:{dash:'dash',color:ORANGE,width:2}}]},CFG);

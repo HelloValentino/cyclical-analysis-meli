@@ -148,20 +148,36 @@ def export_chart_data_json(df: pd.DataFrame, macro_df, output_dir: Path) -> None
                                             "lowess": lowess_smooth})
     _write(output_dir / "regime_probability.json", regime_ts)
 
-    # 3. Phase space trajectory
-    ps_df = df[df["phase_x"].notna() & df["phase_y"].notna()].sort_values("date") if {"phase_x","phase_y"}.issubset(df.columns) else df.head(0)
-    phase = {"dates": _dates(ps_df["date"]), "phase_x": _ser(ps_df["phase_x"]),
-             "phase_y": _ser(ps_df["phase_y"]),
-             "scarcity": _ser(ps_df["scarcity_index_normalized"]) if "scarcity_index_normalized" in ps_df.columns else [],
-             "labels": [_quarter_label(d) for d in ps_df["date"]]}
+    # 3. Phase space trajectory (annual averages for readability)
+    ps_df = df[df["phase_x"].notna() & df["phase_y"].notna()].sort_values("date").copy() if {"phase_x","phase_y"}.issubset(df.columns) else df.head(0)
+    if not ps_df.empty:
+        ps_df["year"] = ps_df["date"].dt.year
+        agg_cols = {"phase_x": "mean", "phase_y": "mean"}
+        if "scarcity_index_normalized" in ps_df.columns:
+            agg_cols["scarcity_index_normalized"] = "mean"
+        annual = ps_df.groupby("year").agg(agg_cols).reset_index()
+        phase = {"dates": [str(y) for y in annual["year"]],
+                 "phase_x": _ser(annual["phase_x"]),
+                 "phase_y": _ser(annual["phase_y"]),
+                 "scarcity": _ser(annual["scarcity_index_normalized"]) if "scarcity_index_normalized" in annual.columns else [],
+                 "labels": [str(y) for y in annual["year"]]}
+    else:
+        phase = {"dates": [], "phase_x": [], "phase_y": [], "scarcity": [], "labels": []}
     _write(output_dir / "phase_space.json", phase)
 
-    # 4. Capital cycle traditional
+    # 4. Capital cycle traditional (annual averages for readability)
     cc_df = df[df["roic_ttm"].notna() & df["total_capex_intensity"].notna()].sort_values("date") if {"roic_ttm","total_capex_intensity"}.issubset(df.columns) else df.head(0)
-    cap = {"dates": _dates(cc_df["date"]), "capex_intensity": _ser(cc_df["total_capex_intensity"], 100),
-           "roic_ttm": _ser(cc_df["roic_ttm"], 100),
-           "wacc": round(float(_wacc_series(cc_df).iloc[-1] * 100), 2) if len(cc_df) else 16.0,
-           "labels": [_quarter_label(d) for d in cc_df["date"]]}
+    if not cc_df.empty:
+        cc_df = cc_df.copy()
+        cc_df["year"] = cc_df["date"].dt.year
+        cc_agg = cc_df.groupby("year").agg({"total_capex_intensity": "mean", "roic_ttm": "mean"}).reset_index()
+        cap = {"dates": [str(y) for y in cc_agg["year"]],
+               "capex_intensity": _ser(cc_agg["total_capex_intensity"], 100),
+               "roic_ttm": _ser(cc_agg["roic_ttm"], 100),
+               "wacc": round(float(_wacc_series(cc_df).iloc[-1] * 100), 2),
+               "labels": [str(y) for y in cc_agg["year"]]}
+    else:
+        cap = {"dates": [], "capex_intensity": [], "roic_ttm": [], "wacc": 16.0, "labels": []}
     _write(output_dir / "capital_cycle.json", cap)
 
     # 5. Cycle decomposition (4 panels)
