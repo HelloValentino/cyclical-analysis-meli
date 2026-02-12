@@ -323,8 +323,7 @@ cyclical-analysis-meli/
 │   ├── analysis.py              # Dataset merging logic
 │   ├── advanced_analysis.py     # Regime modeling & cycle decomposition
 │   ├── visualization.py         # Chart generation
-│   ├── sec_data_extractor.py    # SEC data extraction (optional)
-│   └── load_config.py           # Config loading utilities
+│   └── sec_data_extractor.py    # SEC data extraction (optional)
 │
 ├── data/                        # Data directory
 │   ├── raw/

@@ -10,6 +10,7 @@ Key fixes:
 - Robust 'insufficient data' handling
 """
 
+import json
 import logging
 from pathlib import Path
 
@@ -74,6 +75,10 @@ def create_all_visualizations(df: pd.DataFrame, macro_df: pd.DataFrame, output_d
 
     create_credit_scurve_chart(df, output_dir / "credit_scurve.png")
     create_credit_charts(df, output_dir)
+
+    # Export JSON for interactive dashboard
+    data_dir = output_dir.parent / "data"
+    export_chart_data_json(df, macro_df, data_dir)
 
     logger.info("✓ ALL VISUALIZATIONS COMPLETE\n")
 
@@ -310,7 +315,7 @@ def create_cycle_decomposition_chart(df: pd.DataFrame, output_path: Path) -> Non
         _safe_legend(ax)
 
         cyc = df["roic_cycle"].fillna(0) * 100 if "roic_cycle" in df.columns else pd.Series(0.0, index=df.index)
-        _cycle_bar(axes[0, 1], df["date"], cyc, "pp", "ROIC: Cyclical Deviation")
+        _cycle_bar(axes[0, 1], df["date"], cyc, "Deviation from Trend (pp)", "ROIC: Cyclical Deviation")
     else:
         axes[0, 0].text(0.5, 0.5, "ROIC trend unavailable", ha="center", va="center", transform=axes[0, 0].transAxes)
         axes[0, 1].text(0.5, 0.5, "ROIC cycle unavailable", ha="center", va="center", transform=axes[0, 1].transAxes)
@@ -320,11 +325,11 @@ def create_cycle_decomposition_chart(df: pd.DataFrame, output_path: Path) -> Non
         ax.plot(df["date"], df["total_capex_intensity"] * 100, label="Capex Intensity", alpha=0.5)
         ax.plot(df["date"], df["total_capex_intensity_trend"] * 100, label="Trend (HP)", linewidth=3)
         ax.set_title("Investment: Structural Trend")
-        ax.set_ylabel("% of revenue")
+        ax.set_ylabel("Capex Intensity (% of Revenue)")
         _safe_legend(ax)
 
         cyc = df["total_capex_intensity_cycle"].fillna(0) * 100 if "total_capex_intensity_cycle" in df.columns else pd.Series(0.0, index=df.index)
-        _cycle_bar(axes[1, 1], df["date"], cyc, "pp", "Investment: Cyclical Deviation")
+        _cycle_bar(axes[1, 1], df["date"], cyc, "Deviation from Trend (pp)", "Investment: Cyclical Deviation")
     else:
         axes[1, 0].text(0.5, 0.5, "Capex trend unavailable", ha="center", va="center", transform=axes[1, 0].transAxes)
         axes[1, 1].text(0.5, 0.5, "Capex cycle unavailable", ha="center", va="center", transform=axes[1, 1].transAxes)
@@ -351,7 +356,7 @@ def create_intensity_evolution(df: pd.DataFrame, output_path: Path) -> None:
         if "sm_intensity" in df.columns and df["sm_intensity"].notna().any():
             axes[0].plot(df["date"], df["sm_intensity"] * 100, linestyle="--", label="S&M (%)", alpha=0.7)
         axes[0].set_title("Growth Opex Investment Intensity")
-        axes[0].set_ylabel("% of revenue")
+        axes[0].set_ylabel("Growth Opex (% of Revenue)")
         _safe_legend(axes[0])
     else:
         axes[0].text(0.5, 0.5, "Growth opex intensity unavailable", ha="center", va="center", transform=axes[0].transAxes)
@@ -359,7 +364,7 @@ def create_intensity_evolution(df: pd.DataFrame, output_path: Path) -> None:
     if "total_capex_intensity" in df.columns and df["total_capex_intensity"].notna().any():
         axes[1].plot(df["date"], df["total_capex_intensity"] * 100, marker="o", linewidth=2.5, label="Capex (%)")
         axes[1].set_title("Capex Intensity")
-        axes[1].set_ylabel("% of revenue")
+        axes[1].set_ylabel("Capex (% of Revenue)")
         _safe_legend(axes[1])
     else:
         axes[1].text(0.5, 0.5, "Capex intensity unavailable", ha="center", va="center", transform=axes[1].transAxes)
@@ -367,7 +372,7 @@ def create_intensity_evolution(df: pd.DataFrame, output_path: Path) -> None:
     if "total_growth_investment_intensity" in df.columns and df["total_growth_investment_intensity"].notna().any():
         axes[2].plot(df["date"], df["total_growth_investment_intensity"] * 100, marker="o", linewidth=2.5, label="Total Growth Investment (%)")
         axes[2].set_title("Total Growth Investment Intensity")
-        axes[2].set_ylabel("% of revenue")
+        axes[2].set_ylabel("Total Investment (% of Revenue)")
         _safe_legend(axes[2])
     else:
         axes[2].text(0.5, 0.5, "Total growth investment intensity unavailable", ha="center", va="center", transform=axes[2].transAxes)
@@ -420,19 +425,24 @@ def create_ep_persistence(df: pd.DataFrame, output_path: Path) -> None:
     fig, ax = plt.subplots(figsize=(14, 6))
 
     if "economic_profit_ttm" in df.columns and df["economic_profit_ttm"].notna().any():
-        ax.bar(df["date"], df["economic_profit_ttm"], alpha=0.7)
+        import datetime as _dt
+        from matplotlib.ticker import FuncFormatter
+        ep = df["economic_profit_ttm"]
+        colors = ["green" if v >= 0 else "red" for v in ep.fillna(0)]
+        ax.bar(df["date"], ep, width=_dt.timedelta(days=60), color=colors, alpha=0.7, edgecolor="black", linewidth=0.5)
         ax.axhline(0, linewidth=2, alpha=0.7)
+        ax.yaxis.set_major_formatter(FuncFormatter(lambda v, _: f"${v / 1e6:,.0f}M"))
 
         if "ep_margin" in df.columns and df["ep_margin"].notna().any():
             ax2 = ax.twinx()
             ax2.plot(df["date"], df["ep_margin"] * 100, marker="o", linewidth=2.2, label="EP Margin (%)")
-            ax2.set_ylabel("EP Margin (%)")
+            ax2.set_ylabel("EP Margin (% of Revenue)")
             _safe_legend(ax2)
     else:
         ax.text(0.5, 0.5, "Economic profit series unavailable", ha="center", va="center", transform=ax.transAxes)
 
     ax.set_title("Economic Profit Persistence")
-    ax.set_ylabel("Economic Profit (TTM, $)")
+    ax.set_ylabel("Economic Profit, TTM ($M)")
     plt.xticks(rotation=45, ha="right")
     plt.tight_layout()
     plt.savefig(output_path, dpi=300, bbox_inches="tight")
@@ -447,6 +457,7 @@ def create_credit_scurve_chart(df: pd.DataFrame, output_path: Path) -> None:
     if "credit_portfolio_log" in df.columns and df["credit_portfolio_log"].notna().any():
         axes[0].plot(df["date"], df["credit_portfolio_log"], marker="o", linewidth=2.3, label="log(credit)")
         axes[0].set_title("Credit Monetization (Log Scale)")
+        axes[0].set_ylabel("ln(Credit Portfolio)")
         _safe_legend(axes[0])
     else:
         axes[0].text(0.5, 0.5, "Credit log series unavailable", ha="center", va="center", transform=axes[0].transAxes)
@@ -454,15 +465,20 @@ def create_credit_scurve_chart(df: pd.DataFrame, output_path: Path) -> None:
     if "credit_portfolio_log_growth" in df.columns and df["credit_portfolio_log_growth"].notna().any():
         axes[1].plot(df["date"], df["credit_portfolio_log_growth"], marker="s", linewidth=2.0, label="Log growth")
         axes[1].axhline(0, alpha=0.5)
-        axes[1].set_title("Credit Log Growth")
+        axes[1].set_title("Credit Log Growth (Velocity)")
+        axes[1].set_ylabel("QoQ Δ ln(Credit) (×100)")
         _safe_legend(axes[1])
     else:
         axes[1].text(0.5, 0.5, "Credit log growth unavailable", ha="center", va="center", transform=axes[1].transAxes)
 
     if "credit_portfolio_log_accel" in df.columns and df["credit_portfolio_log_accel"].notna().any():
-        axes[2].bar(df["date"], df["credit_portfolio_log_accel"].fillna(0), alpha=0.7)
+        import datetime as _dt
+        accel = df["credit_portfolio_log_accel"].fillna(0)
+        colors = ["green" if v >= 0 else "red" for v in accel]
+        axes[2].bar(df["date"], accel, width=_dt.timedelta(days=60), color=colors, alpha=0.7, edgecolor="black", linewidth=0.5)
         axes[2].axhline(0, linewidth=2)
         axes[2].set_title("Credit Growth Acceleration (Inflection)")
+        axes[2].set_ylabel("Δ² ln(Credit) (×100)")
     else:
         axes[2].text(0.5, 0.5, "Credit acceleration unavailable", ha="center", va="center", transform=axes[2].transAxes)
 
@@ -485,13 +501,19 @@ def create_credit_charts(df: pd.DataFrame, output_dir: Path) -> None:
     # Growth dynamics
     fig, ax = plt.subplots(figsize=(14, 6))
     if "credit_growth" in df.columns and df["credit_growth"].notna().any():
-        ax.bar(df["date"], df["credit_growth"], alpha=0.6, label="YoY Growth (%)")
+        import datetime as _dt
+        cg = df["credit_growth"].fillna(0)
+        colors = ["green" if v >= 0 else "red" for v in cg]
+        ax.bar(df["date"], df["credit_growth"], width=_dt.timedelta(days=60), color=colors, alpha=0.6, edgecolor="black", linewidth=0.5, label="YoY Growth (%)")
         ax.axhline(0, linewidth=1.5)
+
+        ax.set_ylabel("YoY Credit Growth (%)")
 
         if "credit_growth_accel" in df.columns and df["credit_growth_accel"].notna().any():
             ax2 = ax.twinx()
             ax2.plot(df["date"], df["credit_growth_accel"], marker="o", linewidth=2, label="Acceleration (pp)")
             ax2.axhline(0, linestyle="--", alpha=0.5)
+            ax2.set_ylabel("Growth Acceleration (pp)")
             _safe_legend(ax2)
         _safe_legend(ax)
     else:
@@ -513,7 +535,7 @@ def create_credit_charts(df: pd.DataFrame, output_dir: Path) -> None:
         ax.text(0.5, 0.5, "Credit intensity unavailable", ha="center", va="center", transform=ax.transAxes)
 
     ax.set_title("Credit Deployment Intensity")
-    ax.set_ylabel("% of revenue")
+    ax.set_ylabel("Credit Portfolio / Revenue (%)")
     plt.xticks(rotation=45, ha="right")
     plt.tight_layout()
     plt.savefig(output_dir / "credit_intensity.png", dpi=300, bbox_inches="tight")
@@ -548,3 +570,128 @@ def create_summary_table(df: pd.DataFrame, output_path: Path) -> pd.DataFrame:
     out.to_csv(output_path, index=False)
     logger.info(f"  ✓ Saved: {Path(output_path).name}")
     return out
+
+
+# ─────────────────────────────────────────────────────────────
+# JSON Data Export for Interactive Dashboard
+# ─────────────────────────────────────────────────────────────
+
+def _ser(series, mult=1):
+    """Convert a pandas Series to a JSON-safe list, multiplying by mult."""
+    return [None if (pd.isna(v) or not np.isfinite(v)) else round(float(v) * mult, 6) for v in series]
+
+
+def _dates(series):
+    return [d.isoformat() if pd.notna(d) else None for d in pd.to_datetime(series, errors="coerce")]
+
+
+def export_chart_data_json(df: pd.DataFrame, macro_df, output_dir: Path) -> None:
+    """Export all chart data as JSON files for the interactive Plotly.js dashboard."""
+    logger.info("Exporting chart data to JSON...")
+    output_dir = Path(output_dir)
+    output_dir.mkdir(parents=True, exist_ok=True)
+
+    dates = _dates(df["date"])
+    wacc = _ser(_wacc_series(df), 100)
+
+    # 1. Regime heatmap (from macro_df)
+    regime = {"scarcity": {}, "probability": {}}
+    if macro_df is not None and not macro_df.empty:
+        mdf = macro_df.copy()
+        if "country" not in mdf.columns:
+            mdf["country"] = "BRA"
+        mdf["quarter"] = mdf["date"].dt.to_period("Q").astype(str)
+        for val_col, key in [("scarcity_index_normalized", "scarcity"), ("prob_scarcity", "probability")]:
+            if val_col in mdf.columns and mdf[val_col].notna().any():
+                piv = mdf.pivot_table(index="country", columns="quarter", values=val_col, aggfunc="mean")
+                regime[key] = {"countries": piv.index.tolist(), "quarters": piv.columns.tolist(),
+                               "values": [[None if pd.isna(v) else round(float(v), 4) for v in row] for row in piv.values]}
+    _write(output_dir / "regime_heatmap.json", regime)
+
+    # 2. Regime probability time-series (from macro_df)
+    regime_ts = {"series": []}
+    if macro_df is not None and not macro_df.empty:
+        mdf = macro_df.copy()
+        if "country" not in mdf.columns:
+            mdf["country"] = "BRA"
+        if "prob_scarcity" in mdf.columns:
+            for country in mdf["country"].dropna().unique():
+                cdf = mdf[mdf["country"] == country].sort_values("date")
+                regime_ts["series"].append({"country": str(country), "dates": _dates(cdf["date"]),
+                                            "prob_scarcity": _ser(cdf["prob_scarcity"])})
+    _write(output_dir / "regime_probability.json", regime_ts)
+
+    # 3. Phase space trajectory
+    ps_df = df[df["phase_x"].notna() & df["phase_y"].notna()].sort_values("date") if {"phase_x","phase_y"}.issubset(df.columns) else df.head(0)
+    phase = {"dates": _dates(ps_df["date"]), "phase_x": _ser(ps_df["phase_x"]),
+             "phase_y": _ser(ps_df["phase_y"]),
+             "scarcity": _ser(ps_df["scarcity_index_normalized"]) if "scarcity_index_normalized" in ps_df.columns else [],
+             "labels": [_quarter_label(d) for d in ps_df["date"]]}
+    _write(output_dir / "phase_space.json", phase)
+
+    # 4. Capital cycle traditional
+    cc_df = df[df["roic_ttm"].notna() & df["total_capex_intensity"].notna()].sort_values("date") if {"roic_ttm","total_capex_intensity"}.issubset(df.columns) else df.head(0)
+    cap = {"dates": _dates(cc_df["date"]), "capex_intensity": _ser(cc_df["total_capex_intensity"], 100),
+           "roic_ttm": _ser(cc_df["roic_ttm"], 100),
+           "wacc": round(float(_wacc_series(cc_df).iloc[-1] * 100), 2) if len(cc_df) else 16.0,
+           "labels": [_quarter_label(d) for d in cc_df["date"]]}
+    _write(output_dir / "capital_cycle.json", cap)
+
+    # 5. Cycle decomposition (4 panels)
+    cycle = {"dates": dates,
+             "roic_ttm": _ser(df.get("roic_ttm", pd.Series(dtype=float)), 100),
+             "roic_trend": _ser(df.get("roic_trend", pd.Series(dtype=float)), 100),
+             "roic_cycle": _ser(df.get("roic_cycle", pd.Series(dtype=float)).fillna(0), 100),
+             "capex_intensity": _ser(df.get("total_capex_intensity", pd.Series(dtype=float)), 100),
+             "capex_trend": _ser(df.get("total_capex_intensity_trend", pd.Series(dtype=float)), 100),
+             "capex_cycle": _ser(df.get("total_capex_intensity_cycle", pd.Series(dtype=float)).fillna(0), 100)}
+    _write(output_dir / "cycle_decomposition.json", cycle)
+
+    # 6. Intensity evolution (3 panels)
+    intensity = {"dates": dates,
+                 "growth_opex": _ser(df.get("growth_opex_intensity", pd.Series(dtype=float)), 100),
+                 "rd": _ser(df.get("rd_intensity", pd.Series(dtype=float)), 100),
+                 "sm": _ser(df.get("sm_intensity", pd.Series(dtype=float)), 100),
+                 "capex": _ser(df.get("total_capex_intensity", pd.Series(dtype=float)), 100),
+                 "total_growth": _ser(df.get("total_growth_investment_intensity", pd.Series(dtype=float)), 100)}
+    _write(output_dir / "intensity_evolution.json", intensity)
+
+    # 7. ROIC evolution (2 panels)
+    roic = {"dates": dates, "wacc": wacc,
+            "roic_ttm": _ser(df.get("roic_ttm", pd.Series(dtype=float)), 100),
+            "adjusted_roic": _ser(df.get("adjusted_roic", pd.Series(dtype=float)), 100),
+            "roic_trend": _ser(df.get("roic_trend", pd.Series(dtype=float)), 100),
+            "incremental_roic": _ser(df.get("incremental_roic", pd.Series(dtype=float)), 100),
+            "adjusted_incremental_roic": _ser(df.get("adjusted_incremental_roic", pd.Series(dtype=float)), 100)}
+    _write(output_dir / "roic_evolution.json", roic)
+
+    # 8. EP persistence
+    ep = {"dates": dates,
+          "economic_profit_ttm": _ser(df.get("economic_profit_ttm", pd.Series(dtype=float))),
+          "ep_margin": _ser(df.get("ep_margin", pd.Series(dtype=float)), 100)}
+    _write(output_dir / "ep_persistence.json", ep)
+
+    # 9. Credit S-curve (3 panels)
+    scurve = {"dates": dates,
+              "credit_log": _ser(df.get("credit_portfolio_log", pd.Series(dtype=float))),
+              "credit_log_growth": _ser(df.get("credit_portfolio_log_growth", pd.Series(dtype=float))),
+              "credit_log_accel": _ser(df.get("credit_portfolio_log_accel", pd.Series(dtype=float)))}
+    _write(output_dir / "credit_scurve.json", scurve)
+
+    # 10. Credit growth
+    cg = {"dates": dates,
+          "credit_growth": _ser(df.get("credit_growth", pd.Series(dtype=float))),
+          "credit_growth_accel": _ser(df.get("credit_growth_accel", pd.Series(dtype=float)))}
+    _write(output_dir / "credit_growth.json", cg)
+
+    # 11. Credit intensity
+    ci = {"dates": dates,
+          "credit_intensity": _ser(df.get("credit_intensity", pd.Series(dtype=float)), 100)}
+    _write(output_dir / "credit_intensity.json", ci)
+
+    logger.info(f"  ✓ Exported 11 JSON files to {output_dir}")
+
+
+def _write(path: Path, data: dict) -> None:
+    with open(path, "w") as f:
+        json.dump(data, f, separators=(",", ":"))
