@@ -131,10 +131,21 @@ def export_chart_data_json(df: pd.DataFrame, macro_df, output_dir: Path) -> None
         if "country" not in mdf.columns:
             mdf["country"] = "BRA"
         if "prob_scarcity" in mdf.columns:
+            from statsmodels.nonparametric.smoothers_lowess import lowess as _lowess
             for country in mdf["country"].dropna().unique():
                 cdf = mdf[mdf["country"] == country].sort_values("date")
-                regime_ts["series"].append({"country": str(country), "dates": _dates(cdf["date"]),
-                                            "prob_scarcity": _ser(cdf["prob_scarcity"])})
+                # Aggregate to quarterly for a readable chart
+                cdf = cdf.set_index("date")
+                qdf = cdf[["prob_scarcity"]].resample("QE").mean().dropna().reset_index()
+                prob = qdf["prob_scarcity"].values
+                lowess_smooth = [None] * len(prob)
+                if len(prob) >= 4:
+                    xs = np.arange(len(prob))
+                    result = _lowess(prob, xs, frac=0.2, return_sorted=False)
+                    lowess_smooth = [round(float(v), 6) for v in result]
+                regime_ts["series"].append({"country": str(country), "dates": _dates(qdf["date"]),
+                                            "prob_scarcity": _ser(qdf["prob_scarcity"]),
+                                            "lowess": lowess_smooth})
     _write(output_dir / "regime_probability.json", regime_ts)
 
     # 3. Phase space trajectory

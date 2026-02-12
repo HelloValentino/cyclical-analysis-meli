@@ -185,7 +185,8 @@ function cc(id,title,desc,wide){
 }
 function barColors(vals){return vals.map(v=>v>=0?GREEN:RED)}
 
-async function load(f){const r=await fetch(D+f);return r.json();}
+const _v='?v='+Date.now();
+async function load(f){const r=await fetch(D+f+_v);return r.json();}
 
 async function init(){
 try{
@@ -209,7 +210,11 @@ P.newPlot('c-regime',rTraces,{...LY,height:500,grid:{rows:2,columns:1,pattern:'i
 
 // 2. Regime Probability TS
 el=cc('c-regime-ts','Regime Probability Over Time','P(Capital Scarcity) by country with threshold lines');C.appendChild(el);
-const rts=regimeTS.series.map((s,i)=>({x:s.dates,y:s.prob_scarcity,name:s.country,mode:'lines+markers',marker:{size:4}}));
+const rts=regimeTS.series.flatMap((s,i)=>{
+  const traces=[{x:s.dates,y:s.prob_scarcity,name:s.country,mode:'lines+markers',marker:{size:4},opacity:0.6}];
+  if(s.lowess){traces.push({x:s.dates,y:s.lowess,name:s.country+' LOWESS',mode:'lines',line:{width:3,color:'#c0392b'}});}
+  return traces;
+});
 rts.push({x:regimeTS.series[0]?.dates||[],y:regimeTS.series[0]?.dates.map(()=>0.5)||[],name:'50% Threshold',mode:'lines',line:{dash:'dash',color:GREY}});
 P.newPlot('c-regime-ts',rts,{...LY,height:380,yaxis:{title:'P(Capital Scarcity)',range:[0,1]}},CFG);
 
